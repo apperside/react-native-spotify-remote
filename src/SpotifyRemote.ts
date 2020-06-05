@@ -8,6 +8,7 @@ import CrossfadeState from './CrossfadeState';
 import RecommendedContentOptions from './RecommendedContentOptions';
 import ContentType from './ContentType';
 import GetChildrenItemsOptions, { DEFAULT_GET_CHILDREN_OPTIONS } from './GetChildrenItemsOptions';
+import SpotifyApiConfig from "./ApiConfig";
 
 /**
  * Events supported by the [[SpotifyRemoteApi]]
@@ -83,7 +84,7 @@ export interface SpotifyRemoteApi extends TypedEventEmitter<SpotifyRemoteEvents>
      * @returns {Promise<void>}
      * @memberof SpotifyRemoteApi
      */
-    connect(accessToken: string): Promise<void>;
+    connect(config?: SpotifyApiConfig, accessToken?: string, ): Promise<void>;
 
     /**
      * Disconnects the App Remote 
@@ -273,7 +274,7 @@ if (Platform.OS === "android") {
         return [];
     }
 
-    
+
     const androidGetItemOfChildren = SpotifyRemote.getChildrenOfItem;
     SpotifyRemote.getChildrenOfItem = async (item: ContentItem, options) => {
         return androidGetItemOfChildren(item, {

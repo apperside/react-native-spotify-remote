@@ -3,8 +3,6 @@ package com.reactlibrary;
 
 import android.util.Log;
 
-import androidx.arch.core.util.Function;
-
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -13,18 +11,20 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.module.annotations.ReactModule;
+import com.lufinkey.react.eventemitter.RNEventConformer;
 import com.lufinkey.react.eventemitter.RNEventEmitter;
 import com.spotify.android.appremote.api.ConnectionParams;
+import com.spotify.android.appremote.api.ConnectionParams.Builder;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
-
-import com.lufinkey.react.eventemitter.RNEventConformer;
-
 import com.spotify.protocol.client.CallResult;
 import com.spotify.protocol.client.ErrorCallback;
 import com.spotify.protocol.types.ListItem;
 
 import java.util.Stack;
+import java.util.function.Function;
+
+import javax.annotation.Nullable;
 
 
 @ReactModule(name = "RNSpotifyRemoteAppRemote")
@@ -121,20 +121,30 @@ public class RNSpotifyRemoteAppModule extends ReactContextBaseJavaModule impleme
     }
 
     @ReactMethod
-    public void connect(String token, Promise promise) {
+    public void connect(ReadableMap config, @Nullable String token, Promise promise) {
         // todo: looks like the android remote handles it's own auth (since it doesn't have a token)
         // todo: argument.  Can probably improve the experience for those who don't need a token
         // todo: and just want to connect the remote
         authModule = reactContext.getNativeModule(RNSpotifyRemoteAuthModule.class);
         Error notAuthError = new Error("Auth module has not been authorized.");
-        if (authModule == null) {
-            promise.reject(notAuthError);
+        if (authModule == null && config == null) {
             return;
         }
+
         ConnectionParams.Builder paramsBuilder = authModule.getConnectionParamsBuilder();
         if (paramsBuilder == null) {
-            promise.reject(notAuthError);
-            return;
+            String clientId = config.getString("clientID");
+            String redirectUri = config.getString("redirectURL");
+            Boolean showDialog = config.getBoolean("showDialog");
+
+            if (clientId != null && redirectUri != null) {
+                paramsBuilder = new Builder(clientId)
+                                    .setRedirectUri(redirectUri)
+                                    .showAuthView(showDialog);
+            } else {
+                promise.reject(notAuthError);
+                return;
+            }
         }
 
         // If we're already connecting then just push the promise onto stack to handle
@@ -143,7 +153,7 @@ public class RNSpotifyRemoteAppModule extends ReactContextBaseJavaModule impleme
             mConnectPromises.push(promise);
             ConnectionParams connectionParams = paramsBuilder.build();
             SpotifyAppRemote.connect(this.getReactApplicationContext(), connectionParams,
-                    mSpotifyRemoteConnectionListener);
+                                     mSpotifyRemoteConnectionListener);
         } else {
             mConnectPromises.push(promise);
         }
