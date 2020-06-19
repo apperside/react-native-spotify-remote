@@ -125,6 +125,7 @@ public class RNSpotifyRemoteAppModule extends ReactContextBaseJavaModule impleme
         // todo: looks like the android remote handles it's own auth (since it doesn't have a token)
         // todo: argument.  Can probably improve the experience for those who don't need a token
         // todo: and just want to connect the remote
+        // todo: add option to sent auth data from outside 
         authModule = reactContext.getNativeModule(RNSpotifyRemoteAuthModule.class);
         Error notAuthError = new Error("Auth module has not been authorized.");
         if (authModule == null && config == null) {
