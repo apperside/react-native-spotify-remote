@@ -109,15 +109,38 @@ static RNSpotifyRemoteAppRemote *sharedInstance = nil;
 }
 
 - (void)initializeAppRemote:(NSString*)accessToken completionCallback:(RNSpotifyRemotePromise*)completion{
+    
+    SPTConfiguration *config = [SPTConfiguration configurationWithClientID:@"6ba3b452c12142f8968ec81d86c0fadc" redirectURL:[NSURL URLWithString:@"seeting://spotify-login-callback"]];
+    
     SPTAppRemoteLogLevel logLevel = IsDebug == 1 ? SPTAppRemoteLogLevelDebug : SPTAppRemoteLogLevelNone;
-    _appRemote = [[SPTAppRemote alloc] initWithConfiguration:[[RNSpotifyRemoteAuth sharedInstance] configuration] logLevel:logLevel];
-    _appRemote.connectionParameters.accessToken = accessToken != nil ? accessToken : [[RNSpotifyRemoteAuth sharedInstance] accessToken];
+    _appRemote = [[SPTAppRemote alloc] initWithConfiguration:config logLevel:logLevel];
+    _appRemote.connectionParameters.accessToken = accessToken;
     _appRemote.delegate = self;
+    
+    // Subscribe to token received notification
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(receiveTokenNotification:)
+                                                 name:@"SpotifyRemoteAccessToken"
+                                               object:nil];
+    
     // Add our callback before we connect
     [_appRemoteCallbacks addObject:completion];
     RCTExecuteOnMainQueue(^{
-        [self->_appRemote connect];
+        if (![accessToken isEqual: @""]) {
+            [self->_appRemote connect];
+        } else {
+            [self->_appRemote authorizeAndPlayURI:@""];
+        }
     });
+}
+
+-(void)receiveTokenNotification:(NSNotification *) notification {
+    NSString *receivedToken = notification.userInfo[@"token"];
+    _appRemote.connectionParameters.accessToken = receivedToken;
+    _globalAC = receivedToken;
+    [_appRemote connect];
 }
 
 + (instancetype)sharedInstance {
@@ -158,7 +181,7 @@ static RNSpotifyRemoteAppRemote *sharedInstance = nil;
     [self handleEventSubscriptions];
     [self sendEvent:EventNameRemoteConnected args:@[]];
 }
-
+ 
 #pragma mark - Utilities
 
 +(void (^)(id _Nullable, NSError * _Nullable))defaultSpotifyRemoteCallback:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject{
@@ -477,4 +500,3 @@ RCT_EXPORT_METHOD(__registerAsJSEventEmitter:(int)moduleId)
 }
 
 @end
-
