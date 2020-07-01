@@ -179,7 +179,7 @@ static RNSpotifyRemoteAppRemote *sharedInstance = nil;
 - (void)appRemoteDidEstablishConnection:(nonnull SPTAppRemote *)connectedRemote {
     [RNSpotifyRemotePromise resolveCompletions:_appRemoteCallbacks result:_appRemote];
     [self handleEventSubscriptions];
-    [self sendEvent:EventNameRemoteConnected args:@[]];
+    [self sendEvent:EventNameRemoteConnected args:@[_globalAC]];
 }
  
 #pragma mark - Utilities
