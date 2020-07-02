@@ -24,7 +24,7 @@ static RNSpotifyRemoteAppRemote *sharedInstance = nil;
 {
     BOOL _isConnecting;
     NSString* _accessToken;
-
+    
     NSMutableArray<RNSpotifyRemotePromise*>* _appRemoteCallbacks;
     NSMutableDictionary<NSString*,NSNumber*>* _eventSubscriptions;
     NSDictionary<NSString*,RNSpotifyRemoteSubscriptionCallback*>* _eventSubscriptionCallbacks;
@@ -75,36 +75,36 @@ static RNSpotifyRemoteAppRemote *sharedInstance = nil;
 
 - (NSDictionary*)initializeEventSubscribers{
     return @{
-      EventNamePlayerStateChanged: [RNSpotifyRemoteSubscriptionCallback subscriber:^(void(^onSuccess)(void)){
-          if(self->_appRemote != nil && self->_appRemote.playerAPI != nil){
-              self->_appRemote.playerAPI.delegate = self;
-              RCTExecuteOnMainQueue(^{
-                  [self->_appRemote.playerAPI subscribeToPlayerState:^(id  _Nullable result, NSError * _Nullable error) {
-                      // todo: figure out what to do if there is an error
-                      if(error != nil){
-                          DLog(@"Couldn't Subscribe to PlayerStateChanges");
-                      }else{
-                          DLog(@"Subscribed to PlayerStateChanges");
-                          onSuccess();
-                      }
-                  }];
-              });
-          }
-      } unsubscriber:^(void(^onSuccess)(void)){
-          if(self->_appRemote != nil && self->_appRemote.playerAPI != nil){
-              RCTExecuteOnMainQueue(^{
-                  [self->_appRemote.playerAPI unsubscribeToPlayerState:^(id  _Nullable result, NSError * _Nullable error) {
-                      // todo: figure out what to do if there is an error
-                      if(error != nil){
-                          DLog(@"Couldn't Unsubscribe from PlayerStateChanges");
-                      }else{
-                          DLog(@"Unsubscribed to PlayerStateChanges");
-                          onSuccess();
-                      }
-                  }];
-              });
-          }
-      }]
+        EventNamePlayerStateChanged: [RNSpotifyRemoteSubscriptionCallback subscriber:^(void(^onSuccess)(void)){
+            if(self->_appRemote != nil && self->_appRemote.playerAPI != nil){
+                self->_appRemote.playerAPI.delegate = self;
+                RCTExecuteOnMainQueue(^{
+                    [self->_appRemote.playerAPI subscribeToPlayerState:^(id  _Nullable result, NSError * _Nullable error) {
+                        // todo: figure out what to do if there is an error
+                        if(error != nil){
+                            DLog(@"Couldn't Subscribe to PlayerStateChanges");
+                        }else{
+                            DLog(@"Subscribed to PlayerStateChanges");
+                            onSuccess();
+                        }
+                    }];
+                });
+            }
+        } unsubscriber:^(void(^onSuccess)(void)){
+            if(self->_appRemote != nil && self->_appRemote.playerAPI != nil){
+                RCTExecuteOnMainQueue(^{
+                    [self->_appRemote.playerAPI unsubscribeToPlayerState:^(id  _Nullable result, NSError * _Nullable error) {
+                        // todo: figure out what to do if there is an error
+                        if(error != nil){
+                            DLog(@"Couldn't Unsubscribe from PlayerStateChanges");
+                        }else{
+                            DLog(@"Unsubscribed to PlayerStateChanges");
+                            onSuccess();
+                        }
+                    }];
+                });
+            }
+        }]
     };
 }
 
@@ -160,8 +160,8 @@ static RNSpotifyRemoteAppRemote *sharedInstance = nil;
 - (void)playerStateDidChange:(nonnull id<SPTAppRemotePlayerState>)playerState {
     [self sendEvent:EventNamePlayerStateChanged args:@[
         [RNSpotifyConvert SPTAppRemotePlayerState:playerState]
-        ]
-    ];
+    ]
+     ];
 }
 
 #pragma mark - SPTAppRemoteDelegate implementation
@@ -181,7 +181,7 @@ static RNSpotifyRemoteAppRemote *sharedInstance = nil;
     [self handleEventSubscriptions];
     [self sendEvent:EventNameRemoteConnected args:@[_globalAC]];
 }
- 
+
 #pragma mark - Utilities
 
 +(void (^)(id _Nullable, NSError * _Nullable))defaultSpotifyRemoteCallback:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject{
@@ -248,7 +248,8 @@ RCT_EXPORT_METHOD(disconnect:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseR
     resolve(@YES);
 }
 
-RCT_EXPORT_METHOD(connect:(NSDictionary*)config accessToken:(NSString*)accessToken resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+RCT_EXPORT_METHOD(connect:(NSDictionary*)config accessToken:(NSString*)accessToken resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    RNSpotifyRemotePromise<NSNumber*>* completion = [RNSpotifyRemotePromise onResolve:resolve onReject:^(RNSpotifyRemoteError *error) {
         [error reject:reject];
     }];
     if(_isConnecting){
@@ -283,7 +284,7 @@ RCT_EXPORT_METHOD(playItem:(NSDictionary*)item resolve:(RCTPromiseResolveBlock)r
     [self usePlayerApi:^(id<SPTAppRemotePlayerAPI>player) {
         [player playItem:spotifyItem callback:[RNSpotifyRemoteAppRemote defaultSpotifyRemoteCallback:resolve reject:reject]];
     } reject:reject];
-
+    
 }
 
 RCT_EXPORT_METHOD(playItemWithIndex:(NSDictionary*)item skipToTrackIndex:(NSInteger)skipToTrackIndex resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
@@ -301,7 +302,7 @@ RCT_EXPORT_METHOD(queueUri:(NSString*)uri resolve:(RCTPromiseResolveBlock)resolv
     [self usePlayerApi:^(id<SPTAppRemotePlayerAPI>player) {
         [player enqueueTrackUri:uri callback:[RNSpotifyRemoteAppRemote defaultSpotifyRemoteCallback:resolve reject:reject]];
     } reject:reject];
-
+    
 }
 
 RCT_EXPORT_METHOD(resume:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
@@ -381,7 +382,7 @@ RCT_EXPORT_METHOD(getRootContentItems:(NSString* _Nullable)contentType resolve:(
     if(contentType == nil){
         contentType = SPTAppRemoteContentTypeDefault;
     }
-
+    
     [self useContentApi:^(id<SPTAppRemoteContentAPI>contentApi) {
         [contentApi fetchRootContentItemsForType: contentType callback:^(NSArray* _Nullable result, NSError * _Nullable error){
             if(error != nil){
@@ -403,14 +404,14 @@ RCT_EXPORT_METHOD(getRecommendedContentItems:(NSDictionary* _Nullable) options r
     
     [self useContentApi:^(id<SPTAppRemoteContentAPI>contentApi) {
         [contentApi fetchRecommendedContentItemsForType:contentType flattenContainers:flatten
-           callback:^(NSArray* _Nullable result, NSError * _Nullable error){
-              if(error != nil){
-                  [[RNSpotifyRemoteError errorWithNSError:error] reject:reject];
-              }else{
-                  resolve([RNSpotifyConvert SPTAppRemoteContentItems:result]);
-              }
-          }
-        ];
+                                               callback:^(NSArray* _Nullable result, NSError * _Nullable error){
+            if(error != nil){
+                [[RNSpotifyRemoteError errorWithNSError:error] reject:reject];
+            }else{
+                resolve([RNSpotifyConvert SPTAppRemoteContentItems:result]);
+            }
+        }
+         ];
     } reject:reject];
 }
 
@@ -430,20 +431,20 @@ RCT_EXPORT_METHOD(getChildrenOfItem:(NSDictionary*)item resolve:(RCTPromiseResol
 RCT_EXPORT_METHOD(getContentItemForUri:(NSString *)uri resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [self useContentApi:^(id<SPTAppRemoteContentAPI>contentApi) {
         [contentApi fetchContentItemForURI:uri callback:^(NSObject<SPTAppRemoteContentItem>* _Nullable result, NSError * _Nullable error){
-                if(error != nil){
-                    [[RNSpotifyRemoteError errorWithNSError:error] reject:reject];
-                }else{
-                    resolve([RNSpotifyConvert SPTAppRemoteContentItem:result]);
-                }
+            if(error != nil){
+                [[RNSpotifyRemoteError errorWithNSError:error] reject:reject];
+            }else{
+                resolve([RNSpotifyConvert SPTAppRemoteContentItem:result]);
             }
-        ];
+        }
+         ];
     } reject:reject];
 }
 
 
 +(BOOL)requiresMainQueueSetup
 {
-   return NO;
+    return NO;
 }
 
 -(void)handleEventSubscriptions{
