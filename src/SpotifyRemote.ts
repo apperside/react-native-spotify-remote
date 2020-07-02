@@ -84,7 +84,7 @@ export interface SpotifyRemoteApi extends TypedEventEmitter<SpotifyRemoteEvents>
      * @returns {Promise<void>}
      * @memberof SpotifyRemoteApi
      */
-    connect(config?: SpotifyApiConfig, accessToken?: string, ): Promise<void>;
+    connect(config?: SpotifyApiConfig, accessToken?: string): Promise<void>;
 
     /**
      * Disconnects the App Remote 

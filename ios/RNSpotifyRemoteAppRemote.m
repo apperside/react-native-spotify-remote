@@ -248,8 +248,7 @@ RCT_EXPORT_METHOD(disconnect:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseR
     resolve(@YES);
 }
 
-RCT_EXPORT_METHOD(connect:(NSString*)accessToken resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    RNSpotifyRemotePromise<NSNumber*>* completion = [RNSpotifyRemotePromise onResolve:resolve onReject:^(RNSpotifyRemoteError *error) {
+RCT_EXPORT_METHOD(connect:(NSDictionary*)config accessToken:(NSString*)accessToken resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
         [error reject:reject];
     }];
     if(_isConnecting){
