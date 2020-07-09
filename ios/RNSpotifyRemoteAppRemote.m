@@ -31,7 +31,7 @@ static RNSpotifyRemoteAppRemote *sharedInstance = nil;
     
     SPTAppRemote *_appRemote;
 }
-- (void)initializeAppRemote:(NSString*)accessToken completionCallback:(RNSpotifyRemotePromise*)completion;
+- (void)initializeAppRemote:(NSString*)accessToken playURI:(NSString*)playURI completionCallback:(RNSpotifyRemotePromise*)completion;
 - (void)handleEventSubscriptions;
 - (void)resetEventSubscriptions;
 @end
@@ -108,13 +108,14 @@ static RNSpotifyRemoteAppRemote *sharedInstance = nil;
     };
 }
 
-- (void)initializeAppRemote:(NSString*)accessToken completionCallback:(RNSpotifyRemotePromise*)completion{
+- (void)initializeAppRemote:(NSString*)accessToken playURI:(NSString*)playURI completionCallback:(RNSpotifyRemotePromise*)completion{
     
     SPTConfiguration *config = [SPTConfiguration configurationWithClientID:@"6ba3b452c12142f8968ec81d86c0fadc" redirectURL:[NSURL URLWithString:@"seeting://spotify-login-callback"]];
     
     SPTAppRemoteLogLevel logLevel = IsDebug == 1 ? SPTAppRemoteLogLevelDebug : SPTAppRemoteLogLevelNone;
     _appRemote = [[SPTAppRemote alloc] initWithConfiguration:config logLevel:logLevel];
     _appRemote.connectionParameters.accessToken = accessToken;
+    
     _appRemote.delegate = self;
     
     // Subscribe to token received notification
@@ -131,7 +132,7 @@ static RNSpotifyRemoteAppRemote *sharedInstance = nil;
         if (![accessToken isEqual: @""]) {
             [self->_appRemote connect];
         } else {
-            [self->_appRemote authorizeAndPlayURI:@""];
+            [self->_appRemote authorizeAndPlayURI:playURI!=nil?playURI:@""];
         }
     });
 }
@@ -252,24 +253,27 @@ RCT_EXPORT_METHOD(connect:(NSDictionary*)config accessToken:(NSString*)accessTok
     RNSpotifyRemotePromise<NSNumber*>* completion = [RNSpotifyRemotePromise onResolve:resolve onReject:^(RNSpotifyRemoteError *error) {
         [error reject:reject];
     }];
+    NSString *playlistUri=config[@"playURI"];
     if(_isConnecting){
         [_appRemoteCallbacks addObject:completion];
     }else{
         if([self isConnected] == YES){
             resolve(@YES);
         }else{
-            [self initializeAppRemote:accessToken completionCallback:completion];
+            [self initializeAppRemote:accessToken playURI:playlistUri completionCallback:completion];
         }
     }
 }
 
 RCT_EXPORT_METHOD(isConnectedAsync:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     RCTExecuteOnMainQueue(^{
+        
         if([self isConnected]){
             resolve(@YES);
         }else{
             resolve(@NO);
         }
+        
     });
 }
 

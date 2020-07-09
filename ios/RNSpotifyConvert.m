@@ -204,8 +204,8 @@ static NSDateFormatter* _ISO_DATE_FORMATTER;
     }
     
     return @{
-        @"accessToken":session.accessToken,
-        @"refreshToken":session.refreshToken,
+        @"accessToken":session.accessToken?session.accessToken:@"",
+        @"refreshToken":session.refreshToken?session.refreshToken:@"",
         @"scope":[NSNumber numberWithUnsignedInteger: session.scope],
         @"expired":[NSNumber numberWithBool: session.expired],
         @"expirationDate":[self Date:session.expirationDate]
